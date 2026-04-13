@@ -1,0 +1,48 @@
+name: KnifeWatch
+
+on:
+  schedule:
+    # 8am-midnight PT = 15:00-07:00 UTC (crosses midnight, two entries)
+    # Wider window covers both PDT (UTC-7) and PST (UTC-8)
+    - cron: '*/15 15-23 * * *'  # 15:00-23:45 UTC
+    - cron: '*/15 0-7 * * *'    # 00:00-07:45 UTC
+  workflow_dispatch: {}  # Allow manual trigger for testing
+
+permissions:
+  contents: write  # Needed to push data file updates
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests feedparser price-parser
+
+      - name: Run watcher
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: python scripts/watcher.py
+
+      - name: Commit updated data files
+        run: |
+          git config user.name "KnifeWatch Bot"
+          git config user.email "knifewatch@noreply.github.com"
+          git add data/
+          # Only commit if there are changes
+          git diff --staged --quiet || git commit -m "🔪 KnifeWatch data update [skip ci]"
+          # Push with retry (handles race conditions with artifact writes)
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin main && break
+            echo "Push attempt $i failed, retrying in $((i * 2))s..."
+            sleep $((i * 2))
+          done

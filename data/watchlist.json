@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "w_spydiepm2",
+    "make": "Spyderco",
+    "model": "Para Military 2",
+    "display_name": "Spyderco PM2",
+    "required_keywords": [
+      ["spyderco"],
+      ["pm2", "para military 2", "paramilitary 2", "paramilitary2"]
+    ],
+    "target_price": 120,
+    "msrp": 160,
+    "notes": "Test watch - PM2 is posted frequently on Knife_Swap",
+    "active": true,
+    "created_at": "2026-04-13T00:00:00Z",
+    "price_history": []
+  }
+]
